@@ -8,12 +8,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -25,7 +22,6 @@ import net.jeffpoole.httpserver.datasource.FileDataSource;
 import net.jeffpoole.httpserver.logic.HttpServer;
 import net.jeffpoole.httpserver.netty.NettyHttpServerInboundDecoder;
 import net.jeffpoole.httpserver.netty.NettyHttpServerInboundHandler;
-import net.jeffpoole.httpserver.netty.NettyHttpServerOutboundEncoder;
 import net.jeffpoole.httpserver.netty.NettyHttpServerOutboundHandler;
 
 

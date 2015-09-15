@@ -1,6 +1,7 @@
 package net.jeffpoole.httpserver.netty;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -26,7 +27,9 @@ import net.jeffpoole.httpserver.parsing.HttpResponse;
 
 
 /**
- * User: jpoole Date: 9/13/15 Time: 6:57 PM
+ * This class turns outbound HttpResponse objects into actual bytes to send across the wire.  Since
+ * I chose to focus on speed, zero-copy transfers are implemented for larger files (arbitrarily set
+ * to 4kB).
  */
 @Slf4j
 public class NettyHttpServerOutboundHandler extends ChannelOutboundHandlerAdapter
@@ -88,7 +91,10 @@ public class NettyHttpServerOutboundHandler extends ChannelOutboundHandlerAdapte
         }
         log.debug("Done writing data");
       }
-      else log.debug("No data to write");
+      else {
+        log.debug("No data to write (flushing headers)");
+        ctx.writeAndFlush(byteBuf, promise);
+      }
 
       if ("close".equals(httpResponse.getHeaders().getOrDefault("Connection", ""))) {
         log.debug("Closing connection after write");
