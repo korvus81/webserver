@@ -8,7 +8,8 @@ import com.google.common.io.LineProcessor;
 
 
 /**
- * User: jpoole Date: 9/12/15 Time: 11:03 AM
+ * This class builds up a map of headers, telling the caller to end processing when it finds an
+ * empty line (indicative of a double CRLF, or the end of the headers).
  */
 public class HttpHeaderProcessor implements LineProcessor<Map<String, String>>
 {

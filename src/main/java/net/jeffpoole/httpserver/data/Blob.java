@@ -1,7 +1,7 @@
 package net.jeffpoole.httpserver.data;
 
 /**
- * User: jpoole Date: 9/14/15 Time: 12:54 PM
+ * Abstraction for a source of data.
  */
 public interface Blob
 {

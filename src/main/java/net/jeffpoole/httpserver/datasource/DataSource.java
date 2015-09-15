@@ -1,7 +1,8 @@
 package net.jeffpoole.httpserver.datasource;
 
 /**
- * User: jpoole Date: 9/12/15 Time: 12:14 PM
+ * Interface for something that returns a resource given a path.  Only implementation outside of
+ * test classes is FileDataSource.
  */
 public interface DataSource
 {

@@ -4,7 +4,8 @@ import lombok.Value;
 
 
 /**
- * User: jpoole Date: 9/14/15 Time: 12:54 PM
+ * A Blob used when data is in a byte array (used for directory listings, since they don't exist on
+ * disk).
  */
 @Value
 public class ByteArrayBlob implements Blob

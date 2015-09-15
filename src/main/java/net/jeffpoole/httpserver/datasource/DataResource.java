@@ -10,7 +10,9 @@ import net.jeffpoole.httpserver.data.Blob;
 
 
 /**
- * User: jpoole Date: 9/12/15 Time: 12:23 PM
+ * This represents some resource.  It can have etags, modification dates, content-type, etc.
+ * The Blob component represents the data -- an abstraction was needed so we could handle both raw
+ * (array of bytes) data or data from a file (which we can use zero-copy transfers for).
  */
 @Value
 @Wither

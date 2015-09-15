@@ -28,7 +28,8 @@ import net.jeffpoole.httpserver.data.FileBlob;
 
 
 /**
- * User: jpoole Date: 9/12/15 Time: 12:14 PM
+ * This is a DataSource implementation that tries to find the requested path inside a path on the
+ * filesystem.  This is the DataSource used in normal operation.
  */
 @Slf4j
 @RequiredArgsConstructor

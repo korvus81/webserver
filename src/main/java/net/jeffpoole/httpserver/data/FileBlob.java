@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
- * User: jpoole Date: 9/14/15 Time: 12:54 PM
+ * A Blob used when the data is in a file on the filesystem.
  */
 @Value
 @Slf4j

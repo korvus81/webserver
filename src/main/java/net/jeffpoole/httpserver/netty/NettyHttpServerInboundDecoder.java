@@ -19,12 +19,13 @@ import net.jeffpoole.httpserver.parsing.HttpRequest;
 
 
 /**
- * User: jpoole Date: 9/13/15 Time: 6:57 PM
+ * This class is used to decode raw data coming in from the network into HttpRequest objects to be
+ * handled by the next pipeline stage (NettyHttpServerInboundHandler).  Since we currently only
+ * support GET and HEAD, no attempts are made to read a body.
  */
 @Slf4j
 public class NettyHttpServerInboundDecoder extends ByteToMessageDecoder
 {
-
 
   @Override
   protected void decode(final ChannelHandlerContext channelHandlerContext, final ByteBuf byteBuf,
