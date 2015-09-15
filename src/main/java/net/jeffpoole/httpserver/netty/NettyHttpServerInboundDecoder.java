@@ -34,16 +34,14 @@ public class NettyHttpServerInboundDecoder extends ByteToMessageDecoder
     while (startIndex < byteBuf.writerIndex())
     {
       int ind = byteBuf.indexOf(startIndex, byteBuf.writerIndex() - 3, (byte) '\r');
-      if ((byteBuf.writerIndex() - ind) >= 4)
+      if ((byteBuf.writerIndex() - ind) >= 4) // if there are at least 4 bytes to read...
       {
         String possibleEndOfHeaders = byteBuf.toString(ind, 4, Charsets.UTF_8);
         if (possibleEndOfHeaders.equals("\r\n\r\n"))
         {
           // double CRLF means we are at the end of the headers
           int len = (ind + 4) - byteBuf.readerIndex();
-          byte[] request = new byte[len];
-          byteBuf.readBytes(request);
-          list.add(HttpRequest.parse(new String(request, Charsets.UTF_8)));
+          list.add(HttpRequest.parse(byteBuf.readSlice(len)));
           startIndex = ind + 4;
         }
         else

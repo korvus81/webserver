@@ -1,8 +1,6 @@
 package net.jeffpoole.httpserver.parsing;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.handler.codec.LineBasedFrameDecoder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,8 +18,11 @@ import com.google.common.io.CharStreams;
 
 
 /**
- * User: jpoole Date: 9/12/15 Time: 10:54 AM
+ * This is a value class to hold a HTTP request.  As the current implementation only accepts GET and
+ * HEAD, it doesn't support a request body since server behavior is undefined for requests with
+ * bodies using those methods.
  */
+
 @Slf4j
 @Value
 public class HttpRequest
@@ -56,28 +57,42 @@ public class HttpRequest
     return new HttpRequest(requestLine[0], requestLine[1], requestLine[2], headers);
 
   }
-/*
-  public static HttpRequest parse(ByteBuf buf)
+
+  public static HttpRequest parse(ByteBuf buf) throws IOException
   {
-    int i = buf.indexOf(buf.readerIndex(), buf.writerIndex() - 1, (byte) '\r');
-    if (i != -1 && buf.getByte(i+1) == (byte) '\n' )
-    {
-      String[] requestLine = ;
-    }
+    String[] requestLine = getLine(buf).split("\\s+", 3);
+    if (requestLine.length < 3) throw new RuntimeException("Invalid request-line");
+    HttpHeaderProcessor hhp = new HttpHeaderProcessor();
+    while (hhp.processLine(getLine(buf))) /* condition is the body */;
+    return new HttpRequest(requestLine[0], requestLine[1], requestLine[2], hhp.getResult());
   }
 
-  private String getLine(ByteBuf buf)
+  private static String getLine(ByteBuf buf)
   {
-    LineBasedFrameDecoder
-    int i = buf.indexOf(buf.readerIndex(), buf.writerIndex() - 1, (byte) '\r');
-    if (i != -1 && buf.getByte(i+1) == (byte) '\n' )
+    final int eolPos = findEol(buf);
+    if (eolPos > -1)
     {
-      if (i == buf.readerIndex()) {
-        buf.skipBytes(2);
+      if (eolPos == buf.readerIndex()) {
+        buf.skipBytes(2); // skip \r\n
         return "";
       }
-      int len = i - buf.readerIndex();
+      final byte[] bytes = new byte[eolPos-buf.readerIndex()];
+      buf.readBytes(bytes);
+      buf.skipBytes(2); // skip \r\n
+      return new String(bytes, Charsets.UTF_8);
     }
+    return "";
   }
-  */
+
+  private static int findEol(final ByteBuf buf)
+  {
+    final int start = buf.readerIndex();
+    final int end = buf.writerIndex()-1;
+    for (int i = start; i<end; i++)
+    {
+      if (buf.getByte(i) == '\r' && buf.getByte(i+1) == '\n') return i;
+    }
+    return -1;
+  }
+
 }

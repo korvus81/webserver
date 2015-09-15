@@ -19,15 +19,24 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import net.jeffpoole.httpserver.data.FileDataSource;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import net.jeffpoole.httpserver.datasource.FileDataSource;
 import net.jeffpoole.httpserver.logic.HttpServer;
 import net.jeffpoole.httpserver.netty.NettyHttpServerInboundDecoder;
 import net.jeffpoole.httpserver.netty.NettyHttpServerInboundHandler;
 import net.jeffpoole.httpserver.netty.NettyHttpServerOutboundEncoder;
+import net.jeffpoole.httpserver.netty.NettyHttpServerOutboundHandler;
 
 
 /**
- * Hello world!
+ * This is the main entrypoint of the server.
+ * The start() method sets up a Netty NioServerSocketChannel, listening on the provided port.
+ * Incoming requests go through the pipeline as follows:
+ *  NettyHttpServerInboundDecoder -> NettyHttpServerInboundHandler
+ *  (which then passes
+ * Outgoing requests just go through NettyHttpServerOutboundEncoder then straight to the network.
+ *
  */
 @RequiredArgsConstructor
 @ToString
@@ -37,11 +46,6 @@ public class NettyWebserverMain
   final int listenPort;
   final Path pathToServe;
 
-  boolean running = true;
-
-  final int cores = Runtime.getRuntime().availableProcessors();
-  ExecutorService executorService = Executors.newFixedThreadPool(cores);
-
 
   public void start() throws Exception
   {
@@ -49,8 +53,8 @@ public class NettyWebserverMain
     EventLoopGroup group = new NioEventLoopGroup();
     try
     {
-      InetAddress localhost = InetAddress.getLocalHost();
-      InetSocketAddress isa = new InetSocketAddress(/*localhost, */listenPort);
+      // TODO: support setting specific interfaces / addresses to listen on
+      InetSocketAddress isa = new InetSocketAddress(listenPort);
 
       ServerBootstrap bootstrap = new ServerBootstrap();
       bootstrap.group(group)
@@ -64,14 +68,14 @@ public class NettyWebserverMain
               ch.pipeline()
                   .addLast(new NettyHttpServerInboundDecoder())
                   .addLast(new NettyHttpServerInboundHandler(httpServer))
-                  .addLast(new NettyHttpServerOutboundEncoder())
-                  //.addLast(new NettyHttpServerOutboundHandler())
-              ;
+                  .addLast(new NettyHttpServerOutboundHandler());
             }
           });
       log.info("Binding to port [{}]", this.listenPort);
+
       // This will bind and wait for it to complete
       ChannelFuture channelFuture = bootstrap.bind().sync();
+
       // This blocks on the channel getting closed
       channelFuture.channel().closeFuture().sync();
     }
@@ -82,16 +86,36 @@ public class NettyWebserverMain
 
   }
 
+  public static void setLoggingLevel(Level level) {
+    Logger root = (Logger) org.slf4j.LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    root.setLevel(level);
+  }
+
 
   public static void main(String[] args) throws Exception
   {
-    log.info("Server started");
+    setLoggingLevel(Boolean.getBoolean("debug") ? Level.DEBUG : Level.WARN);
+
+
+
+    // defaults
     int port = 8080;
-    if (args.length == 1)
+    String path = "./wwwroot/";
+
+    // If one argument, that is the port to run on, if two, the second is the path to serve.
+    if (args.length >= 1)
     {
       port = Integer.parseInt(args[0]);
     }
-    NettyWebserverMain serverMain = new NettyWebserverMain(port, Paths.get("/srv/www/"));
+    if (args.length >= 2)
+    {
+      path = args[1];
+    }
+
+
+    System.out.println(String.format("Server starting on port [%d] serving path [%s]...", port, path));
+
+    NettyWebserverMain serverMain = new NettyWebserverMain(port, Paths.get(path));
     serverMain.start();
   }
 }

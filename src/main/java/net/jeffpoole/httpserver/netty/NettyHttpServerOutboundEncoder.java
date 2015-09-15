@@ -2,9 +2,12 @@ package net.jeffpoole.httpserver.netty;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.DefaultFileRegion;
+import io.netty.channel.FileRegion;
 import io.netty.handler.codec.MessageToByteEncoder;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
@@ -12,6 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.google.common.base.Charsets;
 
+import net.jeffpoole.httpserver.data.Blob;
+import net.jeffpoole.httpserver.data.ByteArrayBlob;
+import net.jeffpoole.httpserver.data.FileBlob;
 import net.jeffpoole.httpserver.parsing.HttpResponse;
 
 
@@ -40,16 +46,27 @@ public class NettyHttpServerOutboundEncoder extends MessageToByteEncoder<HttpRes
     }
     byteBuf.writeBytes("\r\n".getBytes(Charsets.UTF_8));
     log.debug("Done writing headers");
-    InputStream dataStream = httpResponse.getResource().getDataStream().get();
-    if (httpResponse.getResource().isPresent()
-        && dataStream != null)
+    //InputStream dataStream = httpResponse.getResource().getData().get();
+    Blob blob = httpResponse.getResource().getData();
+    if (blob != null)
     {
-      // TODO: replace with http://netty.io/4.0/api/io/netty/channel/DefaultFileRegion.html implementation
-      while (dataStream.available() > 0)
-        byteBuf.writeBytes(dataStream, dataStream.available());
-      dataStream.close();
+      if (blob instanceof ByteArrayBlob) {
+        byte[] data = ((ByteArrayBlob) blob).getBytes();
+        byteBuf.writeBytes(data);
+      }
+      else if (blob instanceof FileBlob) {
+
+        File file = ((FileBlob) blob).getFile();
+        byteBuf.writeBytes(new FileInputStream(file), (int)file.length());
+
+        // TODO: Try using zero-copy option -- I'm leaving it out for now since it seems to be
+        // slower for small files
+        /*FileRegion fr = new DefaultFileRegion(file, 0, file.length());
+        channelHandlerContext.write(byteBuf);
+        channelHandlerContext.writeAndFlush(fr);*/
+      }
+
       log.debug("Done writing data");
-      //byteBuf.writeBytes("\r\n".getBytes(Charsets.UTF_8));
     }
     else log.debug("No data to write");
 

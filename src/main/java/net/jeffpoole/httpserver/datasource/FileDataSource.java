@@ -1,4 +1,4 @@
-package net.jeffpoole.httpserver.data;
+package net.jeffpoole.httpserver.datasource;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -6,8 +6,6 @@ import java.net.URLDecoder;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -24,7 +22,9 @@ import org.apache.tika.mime.MediaType;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.common.io.ByteSource;
+
+import net.jeffpoole.httpserver.data.ByteArrayBlob;
+import net.jeffpoole.httpserver.data.FileBlob;
 
 
 /**
@@ -89,16 +89,7 @@ public class FileDataSource implements DataSource
               Instant.ofEpochMilli(resolved.toFile().lastModified()),
               determineContentType(resolved),
               Optional.of(resolved.toFile().length()),
-              () -> {
-                try
-                {
-                  return Files.newInputStream(fresolved, StandardOpenOption.READ);
-                }
-                catch (IOException e)
-                {
-                  return null;
-                }
-              }
+              new FileBlob(resolved.toFile())
           );
         }
         else if (resolved.toFile().isDirectory())
@@ -112,16 +103,7 @@ public class FileDataSource implements DataSource
               Instant.ofEpochMilli(resolved.toFile().lastModified()),
               "text/html",
               Optional.of((long) directoryListBytes.length),
-              () -> {
-                try
-                {
-                  return ByteSource.wrap(directoryListBytes).openStream();
-                }
-                catch (IOException e)
-                {
-                  return null;
-                }
-              }
+              new ByteArrayBlob(directoryListBytes)
           );
         }
       }
@@ -131,7 +113,7 @@ public class FileDataSource implements DataSource
             canonicalFilesystemPath);
       }
     }
-    return new DataResource(requestPath, false, null, null, null, Optional.empty(), () -> null);
+    return new DataResource(requestPath, false, null, null, null, Optional.empty(), null);
   }
 
 

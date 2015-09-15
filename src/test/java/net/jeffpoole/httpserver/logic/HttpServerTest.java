@@ -3,8 +3,6 @@ package net.jeffpoole.httpserver.logic;
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -14,11 +12,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
 
-import net.jeffpoole.httpserver.data.DataResource;
-import net.jeffpoole.httpserver.data.DataSource;
-import net.jeffpoole.httpserver.logic.HttpServer;
+import net.jeffpoole.httpserver.data.ByteArrayBlob;
+import net.jeffpoole.httpserver.datasource.DataResource;
+import net.jeffpoole.httpserver.datasource.DataSource;
 import net.jeffpoole.httpserver.parsing.HttpRequest;
 import net.jeffpoole.httpserver.parsing.HttpResponse;
 
@@ -69,7 +66,7 @@ public class HttpServerTest
         Instant.now(),
         "text/plain",
         Optional.of(4L),
-        () -> new ByteArrayInputStream("abc\n".getBytes(Charsets.UTF_8))
+        new ByteArrayBlob("abc\n".getBytes(Charsets.UTF_8))
     ));
     when(dataSource.get("/notfound")).thenReturn(new DataResource(
         "/notfound",
@@ -78,7 +75,7 @@ public class HttpServerTest
         null,
         null,
         Optional.<Long> empty(),
-        () -> null
+        null
     ));
     server = new HttpServer(dataSource);
   }
@@ -90,8 +87,7 @@ public class HttpServerTest
     HttpResponse txt = server.respond(HttpRequest.parse(REQUEST_GET_TXT));
     assertEquals(200, txt.getStatusCode());
     assertEquals("text/plain", txt.getHeaders().get("Content-Type"));
-    String data = CharStreams.toString(new InputStreamReader(
-        txt.getResource().getDataStream().get(), Charsets.UTF_8));
+    String data = new String(((ByteArrayBlob)txt.getResource().getData()).getBytes(), Charsets.UTF_8);
     assertEquals("abc\n", data);
   }
 
@@ -110,16 +106,9 @@ public class HttpServerTest
     HttpResponse notfound = server.respond(HttpRequest.parse(REQUEST_HEAD_NOT_FOUND));
     assertEquals(200, txt.getStatusCode());
     assertEquals(404, notfound.getStatusCode());
-    assertNull(txt.getResource().getDataStream().get());
-    assertNull(notfound.getResource().getDataStream().get());
+    assertNull(txt.getResource().getData());
+    assertNull(notfound.getResource().getData());
   }
 
 
-  @Test
-  public void testInstantToHttpDate() throws Exception
-  {
-    assertEquals(
-        "Sun, 06 Sep 2015 10:15:30 GMT",
-        server.instantToHttpDate(Instant.parse("2015-09-06T10:15:30.00Z")));
-  }
 }

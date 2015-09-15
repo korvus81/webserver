@@ -13,7 +13,8 @@ import net.jeffpoole.httpserver.parsing.HttpRequest;
 
 
 /**
- * User: jpoole Date: 9/13/15 Time: 6:57 PM
+ * This class just hands off processing the request and creating a response to a connection-specific
+ * dispatch queue.  This ensures in-order responses to pipelined requests.
  */
 @Slf4j
 
@@ -31,7 +32,8 @@ public class NettyHttpServerInboundHandler extends SimpleChannelInboundHandler<H
 
     So this will be used so we can queue up multiple requests on one connection and still be sure
     the responses get returned in-order.  But requests from different connections will be processed
-    in parallel.
+    in parallel.  HawtDispatch defaults to creating a thread pool with a thread per core, with the
+    idea that you don't run blocking operations on any of it's threads, so you keep them all busy.
    */
   DispatchQueue queue = Dispatch.createQueue();
 
@@ -45,6 +47,7 @@ public class NettyHttpServerInboundHandler extends SimpleChannelInboundHandler<H
   protected void channelRead0(final ChannelHandlerContext ctx, final HttpRequest msg)
       throws Exception
   {
+    // Run the logic on the dispatch queue
     queue.execute( () -> ctx.channel().writeAndFlush(httpServer.respond(msg)));
   }
 }

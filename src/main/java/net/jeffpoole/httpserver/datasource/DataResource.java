@@ -1,12 +1,12 @@
-package net.jeffpoole.httpserver.data;
+package net.jeffpoole.httpserver.datasource;
 
-import java.io.InputStream;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import lombok.Value;
 import lombok.experimental.Wither;
+
+import net.jeffpoole.httpserver.data.Blob;
 
 
 /**
@@ -24,9 +24,9 @@ public class DataResource
   Optional<Long> size;
   // This is a supplier so we don't have to open an InputStream unless we actually need the data
   // This can return null
-  Supplier<InputStream> dataStream;
+  Blob data;
 
   // For use when we don't have data to reference
   public static DataResource NO_DATA =
-      new DataResource("", false, null, null, null, Optional.empty(), ()->null);
+      new DataResource("", false, null, null, null, Optional.empty(), null);
 }

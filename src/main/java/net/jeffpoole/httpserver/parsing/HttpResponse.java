@@ -5,12 +5,14 @@ import java.util.Map;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import net.jeffpoole.httpserver.data.DataResource;
+import net.jeffpoole.httpserver.datasource.DataResource;
 
 
 /**
- * User: jpoole Date: 9/12/15 Time: 10:54 AM
+ * This is a value class that represents a HTTP response, with several static constructors for common
+ * responses.
  */
+
 @Value
 @Slf4j
 public class HttpResponse
@@ -47,8 +49,23 @@ public class HttpResponse
 
   private static void addDefaultHeaders(Map<String,String> headers, HttpRequest req)
   {
-    if (!headers.containsKey("Content-Length")) headers.put("Content-Length","0");
-    if (!headers.containsKey("Server")) headers.put("Server","jeffpoole");
-    if ("HTTP/1.0".equals(req.getHttpVersion())) headers.put("Connection","close");
+    // This should only be the case for HEAD requests
+    if (!headers.containsKey("Content-Length")) headers.put("Content-Length", "0");
+
+    if (!headers.containsKey("Server")) headers.put("Server", "jeffpoole-adobe");
+
+    // Everything below here is to determine what Connection header we should send
+    // If the request had Connection: close, we want to send Connection: close (and close the
+    // connection when we are done)
+    if ("close".equalsIgnoreCase(req.getHeaders().getOrDefault("Connection", "")))
+      headers.put("Connection","close");
+
+    if ("HTTP/1.0".equals(req.getHttpVersion()))
+    {
+      if ("keep-alive".equalsIgnoreCase(req.getHeaders().getOrDefault("Connection", "")))
+        headers.put("Connection", "Keep-Alive");
+      else
+        headers.put("Connection", "close");
+    }
   }
 }
